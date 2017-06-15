@@ -1,0 +1,1 @@
+java -jar "D:\java\workspaces\developpement_dev\robotAuthentification\target\robotAuthentification-0.0.1-SNAPSHOT-jar-with-dependencies.jar" -t 250 rwLwQWwOZQveLTEZ8iw3zA== kx5/ESGCKG57cJWRjF3AhQ==
