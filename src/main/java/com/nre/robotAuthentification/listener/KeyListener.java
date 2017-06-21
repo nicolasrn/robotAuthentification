@@ -1,5 +1,7 @@
 package com.nre.robotAuthentification.listener;
 
+import static com.nre.robotAuthentification.I18nUtils.translateMessage;
+
 import java.awt.AWTException;
 import java.util.*;
 import java.util.logging.*;
@@ -16,6 +18,7 @@ import com.nre.robotAuthentification.robot.RobotWriter;
 public class KeyListener implements NativeKeyListener {
   private Properties properties;
   private RobotWriter robot;
+  private long tempsPause;
 
   static {
     Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
@@ -24,8 +27,9 @@ public class KeyListener implements NativeKeyListener {
     logger.setUseParentHandlers(false);
   }
 
-  public KeyListener(Properties properties) throws AWTException {
+  public KeyListener(Properties properties, long tempsPause) throws AWTException {
     this.properties = properties;
+    this.tempsPause = tempsPause;
     this.robot = new RobotWriter();
   }
 
@@ -39,7 +43,6 @@ public class KeyListener implements NativeKeyListener {
 
   @Override
   public void nativeKeyTyped(NativeKeyEvent event) {
-    System.out.println("Key Typed: " + event.getModifiers() + " " + event.getKeyChar());
     Enumeration<Object> keys = properties.keys();
     while (keys.hasMoreElements()) {
       String key = String.valueOf(keys.nextElement());
@@ -47,6 +50,11 @@ public class KeyListener implements NativeKeyListener {
         String[] mots = properties.getProperty(key).split(";");
         mots[0] = CipherUtilSecret.decrypt(mots[0]);
         mots[1] = CipherUtilSecret.decrypt(mots[1]);
+        try {
+          Thread.sleep(tempsPause);
+        } catch (InterruptedException e) {
+          System.err.println(translateMessage("error_init_copy"));
+        }
         robot.writeLoginAndPassword(mots);
       }
     }

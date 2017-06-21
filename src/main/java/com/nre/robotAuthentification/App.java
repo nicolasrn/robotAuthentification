@@ -77,6 +77,12 @@ public class App {
     try {
       CipherUtilSecret.loadPassPhrase(KEYSTORE_FILE);
       CommandLine cmd = parser.parse(options, args);
+      long tempsPause = 0;
+
+      if (cmd.hasOption("t")) {
+        tempsPause = Long.parseLong(cmd.getOptionValue("t", "1000"));
+      }
+
       if (cmd.hasOption("e")) {
         System.out.println(encrypt(cmd.getOptionValue("e")));
       } else if (cmd.hasOption("d")) {
@@ -84,12 +90,8 @@ public class App {
       } else if (cmd.hasOption("h")) {
         printHelp(options);
       } else if (cmd.hasOption("z")) {
-        listenKeys();
+        listenKeys(tempsPause);
       } else {
-        long tempsPause = 0;
-        if (cmd.hasOption("t")) {
-          tempsPause = Long.parseLong(cmd.getOptionValue("t", "1000"));
-        }
         startMain(cmd.getArgs(), tempsPause);
       }
     } catch (ParseException e) {
@@ -97,9 +99,9 @@ public class App {
     }
   }
 
-  private static void listenKeys() {
+  private static void listenKeys(long tempsPause) {
     try {
-      new KeyListener(PROPERTIES).launch();
+      new KeyListener(PROPERTIES, tempsPause).launch();
     } catch (AWTException e) {
       System.err.println(translateMessage("error_init_copy"));
     }
@@ -120,7 +122,7 @@ public class App {
       RobotWriter robot = new RobotWriter();
       robot.writeLoginAndPassword(strings);
     } catch (Exception e) {
-      System.err.println("une erreur s'est produite lors de la copie des informations");
+      System.err.println(translateMessage("error_init_copy"));
     }
   }
 
