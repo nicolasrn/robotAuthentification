@@ -1,21 +1,81 @@
 package com.nre.robotAuthentification;
 
-import java.awt.*;
-import java.awt.event.KeyEvent;
+import static com.nre.robotAuthentification.I18nUtils.translateMessage;
+
+import java.awt.AWTException;
+import java.io.*;
+import java.util.*;
 
 import org.apache.commons.cli.*;
-import org.apache.commons.lang.StringUtils;
 
+import com.nre.robotAuthentification.crypt.CipherUtilSecret;
+import com.nre.robotAuthentification.listener.KeyListener;
+import com.nre.robotAuthentification.robot.RobotWriter;
+
+/**
+ * main App
+ */
 public class App {
+  private static final File KEYSTORE_FILE;
+  private static final Properties PROPERTIES;
+
+  static {
+    KEYSTORE_FILE = new File("./keystore");
+    PROPERTIES = new Properties();
+    initProperties();
+    initKeyStoreFile(KEYSTORE_FILE, "16BYTESSECRETKEY");
+  }
+
+  private static void initKeyStoreFile(File file, String defaultValue) {
+    if (!file.exists()) {
+      System.out.println(translateMessage("init_with_default_value"));
+      try {
+        if (!file.createNewFile()) {
+          System.out.println(translateMessage("error_creation_file", new Object[] { "keystore" }));
+        }
+        try (FileWriter fw = new FileWriter(file)) {
+          fw.write(defaultValue);
+          fw.flush();
+        }
+      } catch (Exception e) {
+        System.err.println(translateMessage("error_init_app"));
+      }
+    }
+  }
+
+  private static void initProperties() {
+    File file = new File("./properties");
+    if (!file.exists()) {
+      System.out.println(translateMessage("init_with_default_value"));
+      try {
+        if (!file.createNewFile()) {
+          System.out.println(translateMessage("error_creation_file", new Object[] { "properties" }));
+        }
+        PROPERTIES.put("CTRL+A", "MBnLpZDkaA5PIoRTiqXQsA==;MBnLpZDkaA5PIoRTiqXQsA==");
+        PROPERTIES.store(new FileOutputStream(file), "default file\nShift, Ctrl, Meta, Alt");
+      } catch (Exception e) {
+        System.err.println(translateMessage("error_init_app"));
+      }
+    } else {
+      try {
+        PROPERTIES.load(new FileInputStream(file));
+      } catch (IOException e) {
+        System.err.println(translateMessage("error_on_creation_config_file"));
+      }
+    }
+  }
+
   public static void main(String[] args) {
     CommandLineParser parser = new BasicParser();
     Options options = new Options();
-    options.addOption(new Option("e", true, "encryptage"));
-    options.addOption(new Option("d", true, "décryptage"));
-    options.addOption(new Option("t", true, "temps de pause"));
-    options.addOption(new Option("h", false, "aide"));
-    
+    options.addOption(new Option("e", true, translateMessage("cmd_line_encrypt")));
+    options.addOption(new Option("d", true, translateMessage("cmd_line_decrypt")));
+    options.addOption(new Option("t", true, translateMessage("cmd_line_tmp_pause")));
+    options.addOption(new Option("h", false, translateMessage("cmd_line_help")));
+    options.addOption(new Option("z", false, translateMessage("cmd_line_keyboard_event")));
+
     try {
+      CipherUtilSecret.loadPassPhrase(KEYSTORE_FILE);
       CommandLine cmd = parser.parse(options, args);
       if (cmd.hasOption("e")) {
         System.out.println(encrypt(cmd.getOptionValue("e")));
@@ -23,6 +83,8 @@ public class App {
         System.out.println(decrypt(cmd.getOptionValue("d")));
       } else if (cmd.hasOption("h")) {
         printHelp(options);
+      } else if (cmd.hasOption("z")) {
+        listenKeys();
       } else {
         long tempsPause = 0;
         if (cmd.hasOption("t")) {
@@ -35,27 +97,30 @@ public class App {
     }
   }
 
+  private static void listenKeys() {
+    try {
+      new KeyListener(PROPERTIES).launch();
+    } catch (AWTException e) {
+      System.err.println(translateMessage("error_init_copy"));
+    }
+  }
+
   private static void printHelp(Options options) {
     HelpFormatter formatter = new HelpFormatter();
     formatter.printHelp("App", options);
   }
 
   private static void startMain(String[] strings, long tempsPause) {
-    String login = decrypt(strings[0]);
-    String password = decrypt(strings[1]);
+    strings[0] = decrypt(strings[0]);
+    strings[1] = decrypt(strings[1]);
 
     try {
       Thread.sleep(tempsPause);
 
-      App app = new App();
-      app.ecrireMot(login);
-      app.simulerTabulation();
-      app.ecrireMot(password);
-      app.simulerEntre();
-    } catch (AWTException e) {
-      e.printStackTrace();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
+      RobotWriter robot = new RobotWriter();
+      robot.writeLoginAndPassword(strings);
+    } catch (Exception e) {
+      System.err.println("une erreur s'est produite lors de la copie des informations");
     }
   }
 
@@ -65,48 +130,6 @@ public class App {
 
   private static String encrypt(String data) {
     return CipherUtilSecret.encrypt(data);
-  }
-
-  private Robot robot;
-
-  private App() throws AWTException {
-    robot = new Robot();
-  }
-
-  private boolean isNumeric(char c) {
-    return StringUtils.isNumeric(c + "");
-  }
-
-  private boolean isUpper(char c) {
-    return StringUtils.isAllUpperCase(c + "");
-  }
-
-  private int getKeyCode(char c) {
-    return isNumeric(c) ? c : KeyEvent.getExtendedKeyCodeForChar(c);
-  }
-
-  private void ecrireMot(String mot) {
-    for (char c : mot.toCharArray()) {
-      int key = getKeyCode(c);
-      if (isNumeric(c) || isUpper(c)) {
-        robot.keyPress(KeyEvent.VK_SHIFT);
-      }
-      robot.keyPress(key);
-      robot.keyRelease(key);
-      if (isNumeric(c) || isUpper(c)) {
-        robot.keyRelease(KeyEvent.VK_SHIFT);
-      }
-    }
-  }
-
-  private void simulerTabulation() {
-    robot.keyPress(KeyEvent.VK_TAB);
-    robot.keyRelease(KeyEvent.VK_TAB);
-  }
-
-  private void simulerEntre() {
-    robot.keyPress(KeyEvent.VK_ENTER);
-    robot.keyRelease(KeyEvent.VK_ENTER);
   }
 
 }

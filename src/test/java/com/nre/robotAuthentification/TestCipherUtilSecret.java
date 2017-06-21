@@ -1,27 +1,31 @@
 package com.nre.robotAuthentification;
 
-import org.hamcrest.core.Is;
+import static org.hamcrest.core.Is.is;
+
 import org.junit.*;
 
+import com.nre.robotAuthentification.crypt.CipherUtilSecret;
+
 public class TestCipherUtilSecret {
+  @BeforeClass
+  public static void before() {
+    CipherUtilSecret.loadPassPhraseFromJar("./keystore");
+  }
+
   @Test
   public void encryption() {
-    CipherUtilSecret cipherUtil = new CipherUtilSecret();
     String avantCryptage = "1,2,3 allons dans les bois : " + String.valueOf("123456");
-    // Encryption
-    String encryptedString = cipherUtil.encrypt(avantCryptage);
-    // Before Decryption
-    String apresCryptage = cipherUtil.decrypt(encryptedString);
+    String encryptedString = CipherUtilSecret.encrypt(avantCryptage);
+    String apresCryptage = CipherUtilSecret.decrypt(encryptedString);
 
-    Assert.assertThat(apresCryptage, Is.is(avantCryptage));
+    Assert.assertThat(apresCryptage, is(avantCryptage));
   }
-  
+
   @Test
   public void decryption() {
-    CipherUtilSecret cipherUtil = new CipherUtilSecret();
     String avantDecryptage = "sN4iEQe6ZRnr/59Jtx2+MLaQtzLs6rgV1O/7hig1VERZzkP9FexNxkgWeJLAm/8f";
-    String apresDecryptage = cipherUtil.decrypt(avantDecryptage);
+    String apresDecryptage = CipherUtilSecret.decrypt(avantDecryptage);
 
-    Assert.assertThat("1,2,3 allons dans les bois : " + String.valueOf("123456"), Is.is(apresDecryptage));
+    Assert.assertThat("1,2,3 allons dans les bois : " + String.valueOf("123456"), is(apresDecryptage));
   }
 }
