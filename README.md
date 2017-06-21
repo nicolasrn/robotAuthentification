@@ -1,9 +1,9 @@
 # robotAuthentification
 
-##compile
+## compile
 `mvn clean install` generate 2 jar, first with no dependancies and oher with (`app.jar`). 
 
-##options
+## Options
 java -jar robotAuthentification-full.jar 
 - -d <arg>   decrypt
 - -e <arg>   encrypt
@@ -11,7 +11,7 @@ java -jar robotAuthentification-full.jar
 - -t <arg>   pause
 - -z         use keyboard listener
  
-##Use
+## Use
 - `java -jar App.jar some_data_encoding some_data_encoding2`
 - `java -jar App.jar -z`
 - `java -jar App.jar -e test`
