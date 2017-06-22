@@ -1,6 +1,6 @@
 # robotAuthentification
 
-## compile
+## Compile
 `mvn clean install` generate 2 jar, first with no dependancies and oher with (`app.jar`). 
 
 ## Options
